@@ -23,9 +23,8 @@ public:
 
 	}
 	
-	Kort(Symbol symbol, int verdi) {
-		this->symbol = symbol;
-		this->verdi = verdi;
+	Kort(Symbol symbol, int verdi) : symbol(symbol), verdi(verdi)  {
+	
 	}
 	Symbol getSymbol() {
 		return symbol;
@@ -49,11 +48,17 @@ private:
 	wchar_t navn[100];
 	Kort kort[5];
 	int antallkort;
+	int verdi;
 
 public:
+	Spiller() {
+		antallkort = 0;
+		verdi = 0;
+	}
 	Spiller(wchar_t navn[]) {
 		wcsncpy_s(this->navn, navn, 99);
 		antallkort = 0;
+		verdi = 0;
 	}
 	void skrivUtNavn() {
 		wcout << "Navn: " << navn << endl;
@@ -66,6 +71,15 @@ public:
 	Kort* getKort() {
 		return kort;
 	}
+
+	int getVerdi() {
+		return verdi;
+	}
+	void calclulateVerdi() {
+		for (int i = 0; i < 5; i++) {
+			verdi += kort[i].getVerdi();
+		}
+	}
 	void addKort(Kort k) {
 		if (antallkort < 5) {
 			kort[antallkort] = k;
@@ -74,6 +88,10 @@ public:
 		else {
 			wcout << "Du har for mange kort" << endl;
 		}
+	}
+
+	void tomKort() {
+		antallkort = 0;		
 	}
 
 };
@@ -88,7 +106,7 @@ public:
 	Kortstokk() {
 		kortindex = 0;
 		int i = 0;
-		for (int symbol = 3; symbol < 6; symbol++) {
+		for (int symbol = 3; symbol <= 6; symbol++) {
 
 			for (int verdi = 1; verdi <= 13; verdi++) {
 				kort[i] = Kort(Symbol(symbol), verdi);
@@ -123,7 +141,7 @@ private:
 
 public:
 	KortSpill() {
-		spillere = vector<Spiller>();
+		
 	}
 	void antallspillere() {
 		int antallspillere;
@@ -135,10 +153,28 @@ public:
 			wcin >> navn;
 			Spiller spiller(navn);
 			spillere.push_back(spiller);
+			wcout << endl;
 		}
 
 
 	}
+ 
+	void spillIgjen() {
+		wcout << endl;
+		wstring svar;
+		wcout << L"Vil du spille igjen? (ja/nei)" << endl;
+		wcin >> svar;
+		if (svar == L"ja") {
+			for (int i = 0; i < spillere.size(); i++) {
+						spillere[i].tomKort();
+			}
+			spillRunde();
+		}
+		else {
+			wcout << L"Ha det bra!" << endl;
+		}
+	}
+
 
 	void start() {
 
@@ -149,14 +185,65 @@ public:
 		for (int i = 0; i < spillere.size(); i++) {
 			spillere[i].skrivUtNavn();
 		}
+		wcout << endl;
 	}
+	bool Uavgjort() {
+		for (int i = 0; i < spillere.size(); i++) {
+			for (int j = i + 1; j < spillere.size(); j++) {
+
+				if (spillere[i].getVerdi() != spillere[j].getVerdi()) {
+					return false; 
+				}
+			}
+		}
+		return true;
+	}
+
+	void spillRunde() {
+		Kortstokk kortstokk;
+		kortstokk.stokk();
+		Spiller s;
+		int max = 0;
+
+		for (int i = 0; i < spillere.size(); i++) {
+			auto spiller = spillere[i];
+			kortstokk.delUt(&spiller);
+			spiller.calclulateVerdi();
+			wcout << L"Spiller: " << endl;
+			spiller.skrivUtNavn();
+			wcout << "Har Kort: " << endl;
+			spiller.skrivUtKort();
+			wcout << "Sum: " << spiller.getVerdi() << endl << endl;
+
+			if (spiller.getVerdi() > max) {
+				max = spiller.getVerdi();
+				s = spillere[i];
+			}
+		}
+		bool uavgjort = Uavgjort();
+		if (uavgjort) {
+		wcout << L"Vinner: " << endl;
+		s.skrivUtNavn();
+		wcout << endl;
+		}
+		else {
+			wcout << "Det blei Uavgjort" << endl;
+		}
+	
+		spillIgjen();
+	}
+
 
 };
 
 int main()
 {
-   KortSpill spill;
-   spill.start();
+   KortSpill* spill = new KortSpill();
+   spill->start();
    wcout << L"Spillere: " << endl;
-   spill.skrivUtSpillere();
+   spill->skrivUtSpillere();
+   spill->spillRunde();
+   delete spill;
+
+   return 0;
 }
